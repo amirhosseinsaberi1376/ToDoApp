@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ToDoApp.Database;
 using ToDoApp.DTOs.Users;
+using ToDoApp.Entities;
 
 namespace ToDoApp.Controllers;
 
@@ -18,4 +20,53 @@ public sealed class UsersController(ApplicationDbContext dbContext): ControllerB
 
         return Ok(users);
     }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult> GetOneUser(string id)
+    {
+        UserWithTasksDto? user = await dbContext.Users
+                .Where(u => u.Id == id)
+                .Select(UserQueries.ProjectWithTasksToDto())
+                .FirstOrDefaultAsync();
+
+        if (user is null)
+
+        {
+            return NotFound();
+        }
+
+        return Ok(user);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<UserDto>> CreateHabit(CreateUserDto createUserDto)
+    {
+        User user = createUserDto.ToEntity();
+
+        dbContext.Users.Add(user);
+
+        await dbContext.SaveChangesAsync();
+
+        UserDto userDto = user.ToDto();
+
+        return CreatedAtAction(nameof(GetOneUser), new { id = userDto.Id }, userDto);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult> DeleteUser(string id)
+    {
+        User? user = await dbContext.Users.FirstOrDefaultAsync(h => h.Id == id);
+
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        dbContext.Users.Remove(user);
+
+        await dbContext.SaveChangesAsync();
+
+        return NoContent();
+    }
+
 }

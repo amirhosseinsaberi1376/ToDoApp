@@ -15,9 +15,24 @@ public static Expression<Func<User, UserDto>> ProjectToDto()
             Email = u.Email,
             CreatedAtUtc = u.CreatedAtUtc,
             UpdatedAtUtc = u.UpdatedAtUtc,
+        };
+    }
+
+ public static Expression<Func<User, UserWithTasksDto>> ProjectWithTasksToDto()
+    {
+        return u => new UserWithTasksDto
+        {
+            Id = u.Id,
+            UserName = u.UserName,
+            Email = u.Email,
+            CreatedAtUtc = u.CreatedAtUtc,
+            UpdatedAtUtc = u.UpdatedAtUtc,
             Tasks = u.Tasks
                 .Select(t => t.Title)
                 .ToArray(),
+
         };
     }
+
 }
+
