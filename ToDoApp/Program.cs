@@ -3,10 +3,8 @@ using ToDoApp.Extensions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-builder.AddDatabase();
-
-builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.AddApiServices()
+       .AddDatabase();
 
 WebApplication app = builder.Build();
 
