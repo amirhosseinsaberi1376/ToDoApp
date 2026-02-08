@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ToDoApp.Database;
@@ -50,6 +51,52 @@ public sealed class UsersController(ApplicationDbContext dbContext): ControllerB
         UserDto userDto = user.ToDto();
 
         return CreatedAtAction(nameof(GetOneUser), new { id = userDto.Id }, userDto);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult> UpdateUser(string id, UpdateUserDto updateUserDto)
+    {
+        User? user = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+        if(user == null)
+        {
+            return NotFound();
+        }
+
+        user.UpdateFromDto(updateUserDto);
+
+        await dbContext.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpPatch("{id}")]
+    public async Task<ActionResult> PatchUser(string id, JsonPatchDocument<UserDto> patchDocument)
+    {
+        User? user = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        UserDto userDto = user.ToDto();
+
+        patchDocument.ApplyTo(userDto, ModelState);
+
+        if (!TryValidateModel(userDto))
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        user.UserName = userDto.UserName;
+        user.Email = userDto.Email;
+        user.UpdatedAtUtc = DateTime.UtcNow;
+
+        await dbContext.SaveChangesAsync();
+
+        return NoContent();
+
     }
 
     [HttpDelete("{id}")]

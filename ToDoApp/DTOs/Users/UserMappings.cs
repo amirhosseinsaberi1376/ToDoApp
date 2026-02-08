@@ -27,4 +27,10 @@ internal static class UserMappings
 
         return user;
     }
+
+    public static void UpdateFromDto(this User user, UpdateUserDto dto)
+    {
+        user.UserName = dto.UserName;
+        user.Email = dto.Email;
+    }
 }
