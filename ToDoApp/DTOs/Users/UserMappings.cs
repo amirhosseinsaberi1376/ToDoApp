@@ -19,7 +19,7 @@ internal static class UserMappings
     {
         User user = new()
         {
-            Id = $"h_{Guid.CreateVersion7()}",
+            Id = $"u_{Guid.CreateVersion7()}",
             UserName = dto.UserName,
             Email = dto.Email,
             CreatedAtUtc = DateTime.UtcNow
