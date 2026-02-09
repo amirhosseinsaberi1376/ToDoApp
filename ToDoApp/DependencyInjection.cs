@@ -2,6 +2,9 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 using Newtonsoft.Json.Serialization;
 using ToDoApp.Database;
+using ToDoApp.Services.TodoTasks;
+using ToDoApp.Services.Users;
+using ToDoApp.Services.UserTodoTasks;
 
 namespace ToDoApp;
 
@@ -15,6 +18,10 @@ public static class DependencyInjection
         }).AddNewtonsoftJson(options => options.SerializerSettings.ContractResolver =
      new CamelCasePropertyNamesContractResolver())
      .AddXmlSerializerFormatters();
+
+        builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<ITodoTaskService, TodoTaskService>();
+        builder.Services.AddScoped<IUserTodoTaskService, UserTodoTaskService>();
 
         builder.Services.AddOpenApi();
 
@@ -31,4 +38,4 @@ public static class DependencyInjection
 
         return builder;
     }
-}
+    }

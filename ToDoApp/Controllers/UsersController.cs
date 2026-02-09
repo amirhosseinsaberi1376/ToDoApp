@@ -5,115 +5,56 @@ using Microsoft.EntityFrameworkCore;
 using ToDoApp.Database;
 using ToDoApp.DTOs.Users;
 using ToDoApp.Entities;
+using ToDoApp.Services.Users;
 
 namespace ToDoApp.Controllers;
 
 [ApiController]
 [Route("users")]
-public sealed class UsersController(ApplicationDbContext dbContext): ControllerBase
+public sealed class UsersController(IUserService userService): ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult> GetUsers()
     {
-        List<UserDto> users = await dbContext.Users
-            .Select(UserQueries.ProjectToDto())
-            .ToListAsync();
-
-        return Ok(users);
+        return Ok(await userService.GetUsersAsync());
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult> GetOneUser(string id)
     {
-        UserWithTasksDto? user = await dbContext.Users
-                .Where(u => u.Id == id)
-                .Select(UserQueries.ProjectWithTasksToDto())
-                .FirstOrDefaultAsync();
-
-        if (user is null)
-
-        {
-            return NotFound();
-        }
-
-        return Ok(user);
+        UserWithTasksDto user = await userService.GetUserByIdAsync(id);
+        return user is null ? NotFound() : Ok(user);
     }
 
     [HttpPost]
     public async Task<ActionResult<UserDto>> CreateHabit(CreateUserDto createUserDto)
     {
-        User user = createUserDto.ToEntity();
-
-        dbContext.Users.Add(user);
-
-        await dbContext.SaveChangesAsync();
-
-        UserDto userDto = user.ToDto();
-
-        return CreatedAtAction(nameof(GetOneUser), new { id = userDto.Id }, userDto);
+        UserDto user = await userService.CreateUserAsync(createUserDto);
+        return CreatedAtAction(nameof(GetOneUser), new { id = user.Id }, user);
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateUser(string id, UpdateUserDto updateUserDto)
     {
-        User? user = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
-
-        if(user == null)
-        {
-            return NotFound();
-        }
-
-        user.UpdateFromDto(updateUserDto);
-
-        await dbContext.SaveChangesAsync();
-
-        return NoContent();
+        return await userService.UpdateUserAsync(id, updateUserDto)
+            ? NoContent()
+            : NotFound();
     }
 
     [HttpPatch("{id}")]
-    public async Task<ActionResult> PatchUser(string id, JsonPatchDocument<UserDto> patchDocument)
+    public async Task<ActionResult> PatchUser(string id, JsonPatchDocument<UserDto> patch)
     {
-        User? user = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
-
-        if (user == null)
-        {
-            return NotFound();
-        }
-
-        UserDto userDto = user.ToDto();
-
-        patchDocument.ApplyTo(userDto, ModelState);
-
-        if (!TryValidateModel(userDto))
-        {
-            return ValidationProblem(ModelState);
-        }
-
-        user.UserName = userDto.UserName;
-        user.Email = userDto.Email;
-        user.UpdatedAtUtc = DateTime.UtcNow;
-
-        await dbContext.SaveChangesAsync();
-
-        return NoContent();
-
+        return await userService.PatchUserAsync(id, patch)
+            ? NoContent()
+            : NotFound();
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteUser(string id)
     {
-        User? user = await dbContext.Users.FirstOrDefaultAsync(h => h.Id == id);
-
-        if (user is null)
-        {
-            return NotFound();
-        }
-
-        dbContext.Users.Remove(user);
-
-        await dbContext.SaveChangesAsync();
-
-        return NoContent();
+        return await userService.DeleteUserAsync(id)
+             ? NoContent()
+             : NotFound();
     }
 
 }
